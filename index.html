@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GymPulse - คอร์สเวทเทรนนิ่ง & ตัวจับเวลาพักเซ็ต (Thai Fitness)</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts: Kanit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=Kanit:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="icon-pulse">⚡</span>
+        <h1>GymPulse</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-notification" class="icon-btn btn-noti-color" title="การแจ้งเตือน Notification">
+          <span class="noti-status" id="noti-indicator">🔔</span>
+        </button>
+        <button id="btn-sound" class="icon-btn btn-sound-color active" title="เสียงสัญญาณเตือน">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button id="btn-wakelock" class="icon-btn btn-wakelock-color" title="เปิดหน้าจอค้างไว้">
+          <span id="wakelock-icon">💡</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Notification Permission Banner -->
+    <div id="noti-banner" class="banner hidden">
+      <span>🔔 กดเปิด Notification เพื่อรับแจ้งเตือนเมื่อพักครบเวลา</span>
+      <button id="btn-request-noti">เปิดใช้งาน</button>
+    </div>
+
+    <!-- Active Exercise Indicator in Timer (When running a planned routine) -->
+    <div id="active-exercise-banner" class="active-exercise-banner hidden">
+      <div class="active-ex-thumb-wrap">
+        <img id="active-ex-thumb" src="" alt="ท่าปัจจุบัน" class="active-ex-thumb">
+      </div>
+      <div class="active-ex-info">
+        <span class="ex-label">กำลังฝึกท่า:</span>
+        <strong id="active-ex-name">Barbell Bench Press</strong>
+        <span id="active-ex-muscle" class="active-ex-muscle-tag">🔴 สีแดง: อกกลาง</span>
+      </div>
+      <button id="btn-next-exercise" class="btn-next-ex" title="เปลี่ยนไปท่าถัดไป">ท่าถัดไป ⏭️</button>
+    </div>
+
+    <!-- MAIN VIEW 1: TIMER (หน้าจับเวลาเดิมที่ปรับปรุง) -->
+    <main id="view-timer" class="view-content active">
+      <div class="workout-dashboard">
+        <!-- Status Badge Bar -->
+        <div class="status-bar">
+          <span id="mode-badge" class="badge badge-workout">
+            <span class="badge-icon">🏋️‍♂️</span>
+            <span class="badge-text">กำลังเล่นเซ็ต (Workout)</span>
+          </span>
+          <span id="set-counter" class="badge badge-set">
+            <span class="badge-icon">🔥</span>
+            <span class="set-text">SET 1</span>
+          </span>
+        </div>
+
+        <!-- Main Circular Timer Display -->
+        <div class="timer-display-container">
+          <svg class="progress-ring" width="290" height="290">
+            <circle class="progress-ring-bg" stroke="#1E293B" stroke-width="16" fill="transparent" r="125" cx="145" cy="145" />
+            <circle id="progress-ring-circle" class="progress-ring-fill" stroke="#22C55E" stroke-width="16" stroke-linecap="round" fill="transparent" r="125" cx="145" cy="145" />
+          </svg>
+          <div class="timer-text-content">
+            <div id="main-timer-label" class="timer-label">เวลาในเซ็ต</div>
+            <div id="main-timer-display" class="timer-digits">00:00</div>
+            <div id="sub-timer-display" class="sub-timer">⏱️ เวลารวม: 00:00</div>
+          </div>
+        </div>
+
+        <!-- Main Action Controls -->
+        <div class="main-controls">
+          <button id="btn-primary-action" class="btn btn-rest-trigger">
+            <span class="btn-main-icon">🛑</span>
+            <span class="btn-text">ยกเสร็จแล้ว - พักเซ็ต!</span>
+          </button>
+
+          <div class="secondary-controls">
+            <button id="btn-toggle-workout" class="btn btn-secondary">
+              <span id="workout-play-icon">⏸️</span> พักจับเวลา
+            </button>
+            <button id="btn-reset-workout" class="btn btn-secondary danger">
+              <span>🔄</span> เริ่มใหม่
+            </button>
+          </div>
+        </div>
+
+        <!-- Rest Preset Selector -->
+        <section class="rest-config-section">
+          <h3>⏱️ เลือกเวลาพักเซ็ต (Rest Presets)</h3>
+          <div class="preset-buttons">
+            <button class="btn-preset" data-seconds="30">
+              <span class="preset-icon">⏱️</span> 30 วิ
+            </button>
+            <button class="btn-preset active" data-seconds="60">
+              <span class="preset-icon">⚡</span> 60 วิ (1 นาที)
+            </button>
+            <button class="btn-preset" data-seconds="90">
+              <span class="preset-icon">🏋️</span> 90 วิ
+            </button>
+            <button class="btn-preset" data-seconds="120">
+              <span class="preset-icon">☕</span> 2 นาที
+            </button>
+            <button class="btn-preset" data-seconds="180">
+              <span class="preset-icon">🔥</span> 3 นาที
+            </button>
+          </div>
+
+          <div class="custom-rest-input">
+            <label for="custom-seconds">⚙️ กำหนดเอง (วินาที):</label>
+            <div class="input-group">
+              <input type="number" id="custom-seconds" min="5" max="600" value="60" step="5">
+              <button id="btn-apply-custom" class="btn btn-small">บันทึก</button>
+            </div>
+          </div>
+
+          <div id="active-rest-controls" class="active-rest-controls hidden">
+            <button id="btn-add-15" class="btn btn-chip">
+              <span class="chip-icon">➕</span> 15 วิ
+            </button>
+            <button id="btn-add-30" class="btn btn-chip">
+              <span class="chip-icon">➕</span> 30 วิ
+            </button>
+            <button id="btn-skip-rest" class="btn btn-chip highlight">
+              <span class="chip-icon">🚀</span> เริ่มยกต่อทันที
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- MAIN VIEW 2: WORKOUT PLAN & MUSCLE RECOVERY (คอร์สฝึกวันนี้ & เช็คการพักกล้ามเนื้อ) -->
+    <main id="view-plan" class="view-content hidden">
+      <div class="plan-dashboard">
+        <!-- Muscle Recovery Questionnaire Card -->
+        <section class="card recovery-card">
+          <div class="card-header">
+            <h3>🩺 สอบถามการพักผ่อนของกล้ามเนื้อ</h3>
+            <span class="card-subtitle">เมื่อวานนี้ หรือรอบล่าสุด คุณเล่นส่วนไหนมา?</span>
+          </div>
+
+          <div class="yesterday-selector-grid">
+            <button class="btn-muscle-select" data-muscle="chest">
+              <span class="muscle-emoji">🛡️</span> อก
+            </button>
+            <button class="btn-muscle-select" data-muscle="back">
+              <span class="muscle-emoji">🦅</span> หลัง
+            </button>
+            <button class="btn-muscle-select" data-muscle="legs">
+              <span class="muscle-emoji">🦵</span> ขา & ก้น
+            </button>
+            <button class="btn-muscle-select" data-muscle="shoulders">
+              <span class="muscle-emoji">🥋</span> ไหล่
+            </button>
+            <button class="btn-muscle-select" data-muscle="arms">
+              <span class="muscle-emoji">💪</span> แขน
+            </button>
+            <button class="btn-muscle-select" data-muscle="core">
+              <span class="muscle-emoji">🧱</span> ท้อง
+            </button>
+            <button class="btn-muscle-select full-span" data-muscle="rest">
+              <span class="muscle-emoji">🛌</span> วันพักผ่อน (ไม่ได้เล่น)
+            </button>
+          </div>
+
+          <!-- Dynamic Advice Box -->
+          <div id="recovery-advice-box" class="recovery-advice-box">
+            <div class="advice-header">
+              <span id="recovery-status-icon">💡</span>
+              <strong id="recovery-status-title">คำแนะนำการพักกล้ามเนื้อวันนี้</strong>
+            </div>
+            <p id="recovery-status-desc">กรุณากดเลือกส่วนที่เล่นเมื่อวาน เพื่อให้ระบบวิเคราะห์การพักผ่อนที่ถูกต้อง</p>
+          </div>
+        </section>
+
+        <!-- Routine Builder: เลือกส่วนที่จะเล่นวันนี้ -->
+        <section class="card routine-card">
+          <div class="card-header">
+            <h3>🎯 จัดคอร์สฝึกวันนี้ (แยกหมวดหมู่ อกบน / อกกลาง / อกล่าง)</h3>
+            <span class="card-subtitle">เลือกมัดกล้ามเนื้อ และจัดเซ็ตท่าที่ต้องการเล่น</span>
+          </div>
+
+          <div class="today-muscle-tabs">
+            <button class="tab-chip active" data-target="chest">🛡️ อก</button>
+            <button class="tab-chip" data-target="back">🦅 หลัง</button>
+            <button class="tab-chip" data-target="legs">🦵 ขา</button>
+            <button class="tab-chip" data-target="shoulders">🥋 ไหล่</button>
+            <button class="tab-chip" data-target="arms">💪 แขน</button>
+            <button class="tab-chip" data-target="core">🧱 ท้อง</button>
+          </div>
+
+          <!-- Exercises to pick from (grouped by subcategories) -->
+          <div id="routine-picker-list" class="routine-picker-list">
+            <!-- Dynamic grouped exercise items with illustrations and checkboxes -->
+          </div>
+
+          <!-- Selected Routine Summary & Launch Button -->
+          <div class="routine-action-panel">
+            <div class="routine-summary-text">
+              เลือกแล้ว: <strong id="selected-exercise-count">0</strong> ท่า
+            </div>
+            <button id="btn-launch-routine" class="btn btn-launch-routine" disabled>
+              🚀 เริ่มฝึกตามคอร์สนี้ (ส่งเข้าหน้าจับเวลา)
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- MAIN VIEW 3: EXERCISE LIBRARY & TIKTOK VIDEO TUTORIALS (คลังท่าฝึกและคลิปสั้น TikTok) -->
+    <main id="view-library" class="view-content hidden">
+      <div class="library-dashboard">
+        <div class="library-header-bar">
+          <h2>🏋️‍♂️ คลังท่าฝึก & คลิปสั้น TikTok คนไทย</h2>
+          <p>สอนจัดท่า โฟกัสถูกจุด พร้อมรูปกายวิภาคและคลิปสั้น</p>
+        </div>
+
+        <!-- Filter by main muscle group -->
+        <div class="filter-scroll-container">
+          <button class="filter-chip active" data-filter="chest">🛡️ อก (บน/กลาง/ล่าง)</button>
+          <button class="filter-chip" data-filter="back">🦅 หลัง (ปีก/หนา)</button>
+          <button class="filter-chip" data-filter="legs">🦵 ขา & ก้น</button>
+          <button class="filter-chip" data-filter="shoulders">🥋 ไหล่ (หน้า/ข้าง/หลัง)</button>
+          <button class="filter-chip" data-filter="arms">💪 แขน (หน้า/หลัง)</button>
+          <button class="filter-chip" data-filter="all">ทั้งหมด</button>
+        </div>
+
+        <!-- Filter by sub-category (อกบน, อกกลาง, อกล่าง ฯลฯ) -->
+        <div id="sub-filter-container" class="sub-filter-container">
+          <!-- Dynamically populated subcategory chips -->
+        </div>
+
+        <!-- Exercise Cards Grid -->
+        <div id="exercise-cards-container" class="exercise-cards-container">
+          <!-- Populated dynamically with SVG diagrams, tips, and TikTok clips -->
+        </div>
+      </div>
+    </main>
+
+    <!-- MAIN VIEW 4: HISTORY & STATS (ประวัติและสถิติ) -->
+    <main id="view-history" class="view-content hidden">
+      <div class="history-dashboard">
+        <div class="history-header">
+          <h3>📊 ประวัติและสถิติการเล่น</h3>
+          <button id="btn-clear-history" class="btn-text-only">🗑️ ล้างประวัติ</button>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-total-sets">0</span>
+            <span class="stat-label">เซ็ตที่ยกสำเร็จ</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-total-time">00:00</span>
+            <span class="stat-label">เวลารวมทั้งหมด</span>
+          </div>
+        </div>
+        <div class="log-list-container">
+          <ul id="log-list" class="log-list">
+            <li class="empty-log">ยังไม่มีประวัติการพักเซ็ต</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- MINIMALIST CLEAN EXERCISE & COACHING MODAL -->
+    <div id="video-modal" class="video-modal-backdrop hidden">
+      <div class="video-modal-card minimalist-modal">
+        <!-- Minimal Header -->
+        <div class="modal-header-minimal">
+          <div class="modal-title-box">
+            <h3 id="modal-video-title">อินไคลน์ ดัมเบลเพรส</h3>
+            <span id="modal-english-title" class="modal-subtitle">Incline Dumbbell Press</span>
+          </div>
+          <button id="btn-close-modal" class="btn-close-circle" aria-label="ปิด">✕</button>
+        </div>
+
+        <div class="modal-body-scroll">
+          <!-- Clean Illustration Card without clutter -->
+          <div class="modal-image-showcase">
+            <img id="modal-physique-img" src="" alt="ท่าฝึกและกล้ามเนื้อเป้าหมาย" class="modal-clean-img">
+            <div class="modal-muscle-indicator-pill">
+              <span class="red-dot">🔴</span>
+              <span class="indicator-label">ส่วนที่ได้:</span>
+              <strong id="modal-muscle-target-th">อกบน</strong>
+            </div>
+          </div>
+
+          <!-- Coach Video Link (Clean single button, no broken iframe) -->
+          <div class="modal-video-action-box">
+            <a id="modal-tiktok-link" href="#" target="_blank" class="btn-clean-video">
+              <span class="video-btn-icon">🎬</span>
+              <span id="modal-video-btn-text" class="video-btn-text">ดูคลิปสอนบน TikTok (โดย ฟ้าใส Fit Junctions)</span>
+              <span class="video-btn-arrow">↗</span>
+            </a>
+          </div>
+
+          <!-- Minimal Coaching Cues -->
+          <div class="modal-cues-section">
+            <h4 class="cues-heading">💡 วิธีเล่นให้โดน & ปลอดภัย</h4>
+            <div class="cues-grid">
+              <div class="cue-item">
+                <span class="cue-badge">🎯 จัดท่า</span>
+                <span id="modal-cue-setup" class="cue-desc"></span>
+              </div>
+              <div class="cue-item">
+                <span class="cue-badge">⚡ วิธีออกแรง</span>
+                <span id="modal-cue-exec" class="cue-desc"></span>
+              </div>
+              <div class="cue-item alert">
+                <span class="cue-badge">⚠️ ข้อระวัง</span>
+                <span id="modal-cue-mistake" class="cue-desc"></span>
+              </div>
+              <div class="cue-item">
+                <span class="cue-badge">💨 การหายใจ</span>
+                <span id="modal-cue-breath" class="cue-desc"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Minimal Footer with Add to Course Button -->
+        <div class="modal-footer-minimal">
+          <button id="btn-modal-add-routine" class="btn-modal-add">
+            ➕ เพิ่มท่านี้ในคอร์สวันนี้
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM MOBILE NAVIGATION BAR -->
+    <nav class="bottom-nav-bar">
+      <button class="nav-tab active" data-view="view-timer">
+        <span class="nav-icon">⏱️</span>
+        <span class="nav-label">จับเวลา</span>
+      </button>
+      <button class="nav-tab" data-view="view-plan">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">คอร์สวันนี้</span>
+      </button>
+      <button class="nav-tab" data-view="view-library">
+        <span class="nav-icon">🏋️‍♂️</span>
+        <span class="nav-label">คลังท่า & TikTok</span>
+      </button>
+      <button class="nav-tab" data-view="view-history">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">สถิติ</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Include exercise data first, then app controller -->
+  <script src="exercises.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
